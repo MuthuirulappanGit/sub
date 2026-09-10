@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: wattwise
+    env: node
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: ESP32_API_KEY
+        generateValue: true
+      - key: COST_PER_KWH
+        value: "0.15"
+      - key: CO2_PER_KWH
+        value: "0.85"

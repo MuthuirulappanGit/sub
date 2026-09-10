@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background:
+      linear-gradient(rgba(15, 23, 42, 0.34) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(15, 23, 42, 0.34) 1px, transparent 1px),
+      radial-gradient(circle at 12% 0%, rgba(14, 165, 233, 0.14), transparent 28rem),
+      radial-gradient(circle at 90% 12%, rgba(16, 185, 129, 0.08), transparent 26rem),
+      #060b16;
+    background-size: 44px 44px, 44px 44px, auto, auto, auto;
+    color: #e2e8f0;
+    min-height: 100vh;
+  }
+
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #060b16;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
