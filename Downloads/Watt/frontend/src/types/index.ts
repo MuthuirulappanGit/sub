@@ -35,6 +35,7 @@ export interface Room {
   devices?: Device[];
   relays?: Relay[];
   active_alert?: WastageAlert | null;
+  sensor_status?: { pir?: boolean; current?: boolean; electricity?: boolean } | null;
 }
 
 export interface Device {
@@ -43,12 +44,21 @@ export interface Device {
   name: string;
   device_token: string;
   mac_address: string;
-  firmware_version: string;
-  ip_address: string;
+  firmware_version?: string | null;
+  ip_address?: string | null;
   status: 'ONLINE' | 'OFFLINE' | 'WARNING';
-  last_seen_at: string;
+  last_seen_at?: string | null;
   relays?: Relay[];
   room_name?: string;
+  telemetry?: {
+    voltage: number;
+    current: number;
+    power_watts: number;
+    energy_kwh: number;
+    occupancy: boolean;
+    timestamp: string;
+    sensor_status?: { pir?: boolean; current?: boolean; electricity?: boolean };
+  } | null;
 }
 
 export interface Relay {
@@ -91,7 +101,7 @@ export interface Recommendation {
   category: 'HVAC_OPTIMIZATION' | 'LIGHTING_AUTOMATION' | 'STANDBY_LOAD' | 'SCHEDULE_ALIGNMENT';
   description: string;
   potential_savings_kwh_monthly: number;
-  potential_savings_usd_monthly: number;
+  potential_savings_inr_monthly: number;
   co2_reduction_kg_monthly: number;
   implementation_cost: number;
   payback_months: number;

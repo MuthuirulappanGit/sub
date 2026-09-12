@@ -77,7 +77,7 @@ export const Dashboard: React.FC = () => {
         />
         <StatCard
           title="Estimated Cost"
-          value={`₹${(wastageStats?.total_cost_wasted_usd || 0).toFixed(2)}`}
+          value={`₹${(wastageStats?.total_cost_wasted || 0).toFixed(2)}`}
           subtitle={`${wastageStats?.total_kwh_wasted || 0} kWh wasted`}
           icon={IndianRupee}
           accentColor="text-emerald-400 bg-emerald-400/10"

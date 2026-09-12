@@ -10,6 +10,7 @@ export const WastageAlerts: React.FC = () => {
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   const loadAlerts = async () => {
     try {
@@ -23,6 +24,8 @@ export const WastageAlerts: React.FC = () => {
 
       const statsRes = await apiRequest('/wastage/stats');
       setStats(statsRes.stats);
+      const notificationsRes = await apiRequest('/notifications');
+      setNotifications(notificationsRes.data || []);
     } catch (err) {
       console.error('Failed to load wastage alerts:', err);
     } finally {
@@ -101,7 +104,7 @@ export const WastageAlerts: React.FC = () => {
           <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
             <div>
               <span className="text-xs text-slate-400 uppercase font-mono">Total Financial Loss</span>
-              <div className="text-2xl font-bold text-emerald-400 mt-1">${stats.total_cost_wasted_usd}</div>
+              <div className="text-2xl font-bold text-emerald-400 mt-1">₹{(stats.total_cost_wasted || 0).toFixed(2)}</div>
             </div>
             <DollarSign className="w-8 h-8 text-emerald-400/20" />
           </div>
@@ -109,6 +112,18 @@ export const WastageAlerts: React.FC = () => {
       )}
 
       {/* Incident List */}
+      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
+        <h2 className="text-sm font-bold text-slate-100 mb-3">Notifications</h2>
+        {!notifications.length ? <p className="text-xs text-slate-400">No notifications available.</p> : (
+          <div className="space-y-2">{notifications.slice(0, 10).map((notification) => (
+            <div key={notification.id} className="flex items-start justify-between gap-4 rounded-xl bg-slate-950 p-3">
+              <div><p className="text-xs font-semibold text-slate-200">{notification.message}</p>{notification.room && <p className="text-[11px] text-slate-500">Room: {notification.room}</p>}</div>
+              <time className="text-[10px] text-slate-500 whitespace-nowrap">{new Date(notification.timestamp).toLocaleString()}</time>
+            </div>
+          ))}</div>
+        )}
+      </div>
+
       {loading ? (
         <div className="text-center py-12 text-xs text-slate-400">Loading incident log...</div>
       ) : alerts.length === 0 ? (

@@ -10,7 +10,7 @@ export async function getAnalyticsSummary(req: Request, res: Response) {
   const last24h = new Date(Date.now() - 24 * 3600 * 1000);
   const recentTelemetry = await getRecentTelemetry();
 
-  const euiBenchmarks = await Promise.all(
+  const roomEnergy = await Promise.all(
     buildings.map(async (bldg: any) => {
       const bldgRooms = rooms.filter((r: any) => r.building_id === bldg.id);
       const roomIds = bldgRooms.map((r: any) => r.id);
@@ -20,22 +20,14 @@ export async function getAnalyticsSummary(req: Request, res: Response) {
         timestamp: { $gte: last24h },
       }).lean();
 
-      const totalPowerWattsSum = logs.reduce((sum, l: any) => sum + l.power_watts, 0);
-      const avgWatts = logs.length ? totalPowerWattsSum / logs.length : 0;
-      const dailyKwh = (avgWatts / 1000) * 24;
-      const annualKwhEstimate = dailyKwh * 365;
-
-      const euiKwhPerSqft = parseFloat((annualKwhEstimate / bldg.area_sqft).toFixed(2));
-
       return {
         building_id: bldg.id,
         building_name: bldg.name,
-        code: bldg.code,
-        area_sqft: bldg.area_sqft,
-        daily_kwh: Math.round(dailyKwh),
-        annual_kwh_estimate: Math.round(annualKwhEstimate),
-        eui_kwh_per_sqft: euiKwhPerSqft,
-        target_budget_kw: bldg.target_power_budget_kw,
+        rooms: bldgRooms.map((room: any) => ({
+          room_id: room.id,
+          room_name: room.name,
+          energy_kwh: parseFloat(logs.filter((log: any) => log.room_id === room.id).reduce((sum: number, log: any) => sum + log.energy_kwh, 0).toFixed(3)),
+        })),
       };
     })
   );
@@ -55,8 +47,10 @@ export async function getAnalyticsSummary(req: Request, res: Response) {
   return res.json({
     success: true,
     data: {
-      eui_benchmarks: euiBenchmarks,
+      room_energy: roomEnergy,
       category_breakdown: categoryBreakdown,
+      historical_telemetry: await TelemetryLog.find({ timestamp: { $gte: last24h } }).sort({ timestamp: 1 }).select('room_id power_watts energy_kwh timestamp').lean(),
+      peak: await TelemetryLog.findOne({ timestamp: { $gte: last24h } }).sort({ power_watts: -1 }).lean(),
       rates: {
         cost_per_kwh: env.COST_PER_KWH,
         co2_kg_per_kwh: env.CO2_PER_KWH,
@@ -81,9 +75,9 @@ export async function getRecommendations(req: Request, res: Response) {
     };
   });
 
-  const totalMonthlySavingsUSD = enriched
+  const totalMonthlySavings = enriched
     .filter((r: any) => r.status !== 'DISMISSED')
-    .reduce((sum: number, r: any) => sum + r.potential_savings_usd_monthly, 0);
+    .reduce((sum: number, r: any) => sum + r.potential_savings_inr_monthly, 0);
 
   const totalMonthlyCo2Kg = enriched
     .filter((r: any) => r.status !== 'DISMISSED')
@@ -93,7 +87,7 @@ export async function getRecommendations(req: Request, res: Response) {
     success: true,
     summary: {
       total_recommendations: enriched.length,
-      potential_monthly_savings_usd: Math.round(totalMonthlySavingsUSD),
+      potential_monthly_savings_inr: Math.round(totalMonthlySavings),
       potential_monthly_co2_kg: Math.round(totalMonthlyCo2Kg),
     },
     data: enriched,

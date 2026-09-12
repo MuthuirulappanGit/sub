@@ -16,6 +16,12 @@
     min-height: 100vh;
   }
 
+  @layer components {
+    .field {
+      @apply rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none;
+    }
+  }
+
   code, pre {
     font-family: 'JetBrains Mono', monospace;
   }

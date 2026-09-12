@@ -38,8 +38,8 @@ const deviceSchema = new Schema({
   name: { type: String, required: true },
   device_token: { type: String, required: true, unique: true },
   mac_address: { type: String, required: true, unique: true },
-  firmware_version: { type: String, default: 'v1.0.0' },
-  ip_address: { type: String, default: '192.168.1.100' },
+  firmware_version: { type: String, default: null },
+  ip_address: { type: String, default: null },
   status: { type: String, enum: ['ONLINE', 'OFFLINE', 'WARNING'], default: 'OFFLINE' },
   last_seen_at: { type: Date, default: null },
   created_at: { type: Date, default: Date.now }
@@ -80,6 +80,11 @@ const telemetryLogSchema = new Schema({
   current: { type: Number, required: true },
   power_watts: { type: Number, required: true },
   energy_kwh: { type: Number, required: true },
+  sensor_status: {
+    pir: { type: Boolean, default: true },
+    current: { type: Boolean, default: true },
+    electricity: { type: Boolean, default: true },
+  },
   power_factor: { type: Number, default: 0.95 },
   occupancy: { type: Boolean, required: true, default: false },
   temperature: { type: Number, default: 22.0 },
@@ -116,7 +121,7 @@ const recommendationSchema = new Schema({
   category: { type: String, enum: ['HVAC_OPTIMIZATION', 'LIGHTING_AUTOMATION', 'STANDBY_LOAD', 'SCHEDULE_ALIGNMENT'], required: true },
   description: { type: String, required: true },
   potential_savings_kwh_monthly: { type: Number, required: true },
-  potential_savings_usd_monthly: { type: Number, required: true },
+  potential_savings_inr_monthly: { type: Number, required: true },
   co2_reduction_kg_monthly: { type: Number, required: true },
   implementation_cost: { type: Number, default: 0.0 },
   payback_months: { type: Number, default: 0.0 },
@@ -132,6 +137,12 @@ const auditLogSchema = new Schema({
   timestamp: { type: Date, default: Date.now }
 });
 
+const settingSchema = new Schema({
+  key: { type: String, required: true, unique: true },
+  value: { type: Number, required: true },
+  updated_at: { type: Date, default: Date.now },
+});
+
 export const Building = mongoose.models.Building || mongoose.model('Building', buildingSchema);
 export const Room = mongoose.models.Room || mongoose.model('Room', roomSchema);
 export const Device = mongoose.models.Device || mongoose.model('Device', deviceSchema);
@@ -141,3 +152,4 @@ export const TelemetryLog = mongoose.models.TelemetryLog || mongoose.model('Tele
 export const WastageAlert = mongoose.models.WastageAlert || mongoose.model('WastageAlert', wastageAlertSchema);
 export const Recommendation = mongoose.models.Recommendation || mongoose.model('Recommendation', recommendationSchema);
 export const AuditLog = mongoose.models.AuditLog || mongoose.model('AuditLog', auditLogSchema);
+export const Setting = mongoose.models.Setting || mongoose.model('Setting', settingSchema);

@@ -6,19 +6,19 @@ import {
   AlertTriangle,
   DoorOpen,
   BarChart3,
-  Lightbulb,
-  Radio,
+  Settings,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
   const navItems = [
     { to: '/', label: 'Overview', icon: LayoutDashboard },
     { to: '/live', label: 'Live Energy Grid', icon: Activity },
-    { to: '/wastage', label: 'Wastage Incidents', icon: AlertTriangle },
-    { to: '/rooms', label: 'Rooms & Devices', icon: DoorOpen },
-    { to: '/analytics', label: 'Analytics & EUI', icon: BarChart3 },
-    { to: '/recommendations', label: 'AI Savings Plan', icon: Lightbulb },
-    { to: '/simulator', label: 'IoT Simulator UI', icon: Radio },
+    { to: '/wastage', label: 'Wastage Incident Response', icon: AlertTriangle },
+    { to: '/rooms', label: 'Rooms', icon: DoorOpen },
+    { to: '/hardware', label: 'Connect Hardware', icon: Activity },
+    { to: '/alerts', label: 'Alerts', icon: AlertTriangle },
+    { to: '/analytics', label: 'AI Analytics', icon: BarChart3 },
+    { to: '/settings', label: 'Settings', icon: Settings },
   ];
 
   return (

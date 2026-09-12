@@ -1,5 +1,6 @@
-import { Room, Device, Relay, WastageAlert, TelemetryLog } from '../db/schema.js';
+import { Room, Device, Relay, WastageAlert, TelemetryLog, Setting } from '../db/schema.js';
 import { env } from '../config/env.js';
+import { randomUUID } from 'node:crypto';
 
 export interface ProcessTelemetryInput {
   deviceId: string;
@@ -12,11 +13,12 @@ export interface ProcessTelemetryInput {
   powerFactor?: number;
   temperature?: number;
   humidity?: number;
+  sensorStatus?: { pir?: boolean; current?: boolean; electricity?: boolean };
   timestamp?: Date;
 }
 
 export async function processTelemetryAndDetectWastage(data: ProcessTelemetryInput) {
-  const { deviceId, roomId, powerWatts, occupancy, voltage, current, energyKwh, powerFactor = 0.95, temperature = 22.0, humidity = 45.0 } = data;
+  const { deviceId, roomId, powerWatts, occupancy, voltage, current, energyKwh, powerFactor = 0.95, temperature = 22.0, humidity = 45.0, sensorStatus } = data;
   const now = data.timestamp || new Date();
 
   // 1. Update room status in database
@@ -51,6 +53,7 @@ export async function processTelemetryAndDetectWastage(data: ProcessTelemetryInp
     occupancy,
     temperature,
     humidity,
+    sensor_status: sensorStatus,
     timestamp: now,
   });
 
@@ -67,7 +70,11 @@ export async function processTelemetryAndDetectWastage(data: ProcessTelemetryInp
 
     // Calculate metrics
     const wastedKwhIncrement = (powerWatts / 1000) * (5 / 60); // 5-minute window estimate
-    const costIncrement = wastedKwhIncrement * env.COST_PER_KWH;
+    const tariffSetting = await Setting.findOne({ key: 'tariffPerKwh' }).select('value').lean();
+    const tariff = tariffSetting && !Array.isArray(tariffSetting) && 'value' in tariffSetting
+      ? Number(tariffSetting.value)
+      : env.COST_PER_KWH;
+    const costIncrement = wastedKwhIncrement * tariff;
     const co2Increment = wastedKwhIncrement * env.CO2_PER_KWH;
 
     let severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
@@ -75,7 +82,16 @@ export async function processTelemetryAndDetectWastage(data: ProcessTelemetryInp
     else if (powerWatts > 500) severity = 'HIGH';
     else if (powerWatts > 200) severity = 'MEDIUM';
 
+    const durationSetting = await Setting.findOne({ key: 'wastageAlertDurationSeconds' }).select('value').lean();
+    const requiredDurationSeconds = durationSetting && !Array.isArray(durationSetting) && 'value' in durationSetting
+      ? Number(durationSetting.value)
+      : env.WASTAGE_DURATION_SECONDS;
+
     if (existingAlert) {
+      const elapsedSeconds = (now.getTime() - new Date(existingAlert.created_at).getTime()) / 1000;
+      if (elapsedSeconds < requiredDurationSeconds) {
+        return;
+      }
       // Accumulate metrics
       existingAlert.power_w = powerWatts;
       existingAlert.wasted_kwh += wastedKwhIncrement;
@@ -85,7 +101,7 @@ export async function processTelemetryAndDetectWastage(data: ProcessTelemetryInp
       await existingAlert.save();
     } else {
       // Create new Wastage Alert
-      const alertId = `alert_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const alertId = `alert_${randomUUID()}`;
       await WastageAlert.create({
         id: alertId,
         room_id: roomId,

@@ -11,9 +11,9 @@ import { LiveMonitor } from './pages/LiveMonitor';
 import { WastageAlerts } from './pages/WastageAlerts';
 import { RoomsAndDevices } from './pages/RoomsAndDevices';
 import { Analytics } from './pages/Analytics';
-import { Recommendations } from './pages/Recommendations';
-import { SimulatorControls } from './pages/SimulatorControls';
 import { NotFound } from './pages/NotFound';
+import { Settings } from './pages/Settings';
+import { ConnectHardware } from './pages/ConnectHardware';
 
 const ProtectedLayout: React.FC = () => {
   const { user, loading } = useAuth();
@@ -57,9 +57,10 @@ export function App() {
             <Route path="/live" element={<LiveMonitor />} />
             <Route path="/wastage" element={<WastageAlerts />} />
             <Route path="/rooms" element={<RoomsAndDevices />} />
+            <Route path="/hardware" element={<ConnectHardware />} />
+            <Route path="/alerts" element={<WastageAlerts />} />
             <Route path="/analytics" element={<Analytics />} />
-            <Route path="/recommendations" element={<Recommendations />} />
-            <Route path="/simulator" element={<SimulatorControls />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

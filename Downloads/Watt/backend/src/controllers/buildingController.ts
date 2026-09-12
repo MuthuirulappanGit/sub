@@ -13,7 +13,7 @@ export const createBuildingSchema = z.object({
 });
 
 export const createRoomSchema = z.object({
-  building_id: z.string(),
+  building_id: z.string().default('default'),
   name: z.string().min(2),
   room_number: z.string().min(1),
   floor_number: z.number().int().min(0).default(1),
@@ -132,6 +132,7 @@ export async function getRooms(req: Request, res: Response) {
       current_power_w: liveTelemetry?.power_watts ?? 0,
       is_occupied: liveTelemetry?.occupancy ?? false,
       has_telemetry: Boolean(liveTelemetry),
+      sensor_status: liveTelemetry?.sensor_status || null,
       devices: roomDevices,
       relays: roomRelays,
       active_alert: activeAlert || null,
@@ -143,7 +144,18 @@ export async function getRooms(req: Request, res: Response) {
 
 export async function createRoom(req: Request, res: Response) {
   const { building_id, name, room_number, floor_number, room_type, area_sqft, power_threshold_watts } = req.body;
-  const building = await Building.findOne({ id: building_id });
+  let building = await Building.findOne({ id: building_id });
+  if (!building && building_id === 'default') {
+    building = await Building.create({
+      id: 'default',
+      name: 'WattWise Facility',
+      code: 'FACILITY',
+      address: 'Configured by administrator',
+      total_floors: 1,
+      area_sqft: 1,
+      target_power_budget_kw: 1,
+    });
+  }
   if (!building) {
     return res.status(404).json({ success: false, message: 'Building not found' });
   }
@@ -162,8 +174,14 @@ export async function createRoom(req: Request, res: Response) {
     current_power_w: 0.0,
     created_at: new Date(),
   });
+  await AuditLog.create({
+    user_id: req.user?.id || null,
+    action: 'ROOM_CREATED',
+    details: `Room "${newRoom.name}" (${newRoom.room_number}) was created successfully.`,
+    timestamp: new Date(),
+  });
 
-  return res.status(201).json({ success: true, data: newRoom });
+  return res.status(201).json({ success: true, message: `Room "${newRoom.name}" created successfully.`, data: newRoom });
 }
 
 export async function deleteRoom(req: Request, res: Response) {

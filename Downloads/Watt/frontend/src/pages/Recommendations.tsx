@@ -124,7 +124,7 @@ export const Recommendations: React.FC = () => {
                   <div>
                     <span className="text-[10px] text-slate-500 uppercase">Monthly Savings</span>
                     <div className="text-sm font-bold text-emerald-400">
-                      ${rec.potential_savings_usd_monthly} ({rec.potential_savings_kwh_monthly} kWh)
+                      ₹{rec.potential_savings_inr_monthly} ({rec.potential_savings_kwh_monthly} kWh)
                     </div>
                   </div>
                   <div>

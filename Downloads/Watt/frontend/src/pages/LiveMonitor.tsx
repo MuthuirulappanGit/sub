@@ -2,18 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
 import { Room } from '../types';
 import { Badge } from '../components/Badge';
-import { RelayToggle } from '../components/RelayToggle';
 import { Activity, Zap, Users, AlertTriangle, RefreshCw, Cpu, Radio } from 'lucide-react';
 
 export const LiveMonitor: React.FC = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [selectedBuilding, setSelectedBuilding] = useState<string>('ALL');
   const [loading, setLoading] = useState(true);
 
   const fetchRooms = async () => {
     try {
-      const endpoint = selectedBuilding === 'ALL' ? '/rooms' : `/rooms?building_id=${selectedBuilding}`;
-      const res = await apiRequest(endpoint);
+      const res = await apiRequest('/rooms');
       setRooms(res.data || []);
     } catch (err) {
       console.error('Failed to fetch live room telemetry:', err);
@@ -26,7 +23,7 @@ export const LiveMonitor: React.FC = () => {
     fetchRooms();
     const interval = setInterval(fetchRooms, 3000); // 3s polling for real-time live grid
     return () => clearInterval(interval);
-  }, [selectedBuilding]);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -42,16 +39,6 @@ export const LiveMonitor: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <select
-            value={selectedBuilding}
-            onChange={(e) => setSelectedBuilding(e.target.value)}
-            className="bg-slate-950 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 font-medium focus:outline-none focus:border-brand-500"
-          >
-            <option value="ALL">All Buildings</option>
-            <option value="bldg_sci">Science & Technology Complex</option>
-            <option value="bldg_eng">Engineering Research Tower</option>
-            <option value="bldg_inn">Innovation Center</option>
-          </select>
           <button
             onClick={fetchRooms}
             className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition"
@@ -126,18 +113,12 @@ export const LiveMonitor: React.FC = () => {
                 </div>
 
                 {/* Smart Relays */}
-                {room.relays && room.relays.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-slate-800/80 space-y-2">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
-                      Smart Relay Load Control
-                    </span>
-                    <div className="space-y-2">
-                      {room.relays.map((relay) => (
-                        <RelayToggle key={relay.id} relay={relay} onUpdate={fetchRooms} />
-                      ))}
+                <div className="mt-4 pt-4 border-t border-slate-800/80 space-y-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">Hardware sensors</span>
+                    <div className="text-xs text-slate-400 mt-2">
+                      PIR: {hasTelemetry && room.sensor_status?.pir !== false ? 'Receiving' : 'Waiting'} · Current: {hasTelemetry && room.sensor_status?.current !== false ? 'Receiving' : 'Waiting'} · Electricity: {hasTelemetry && room.sensor_status?.electricity !== false ? 'Receiving' : 'Waiting'}
                     </div>
-                  </div>
-                )}
+                </div>
               </div>
             );
           })}

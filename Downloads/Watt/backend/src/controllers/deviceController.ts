@@ -1,14 +1,16 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { Device, Relay, Room, AuditLog } from '../db/schema.js';
+import { randomUUID } from 'node:crypto';
+import { getRecentTelemetry, markStaleDevicesOffline } from '../services/telemetryStatus.js';
 
 export const registerDeviceSchema = z.object({
   room_id: z.string(),
   name: z.string().min(2),
   device_token: z.string().min(4),
   mac_address: z.string().min(8),
-  firmware_version: z.string().default('v1.0.0'),
-  ip_address: z.string().default('192.168.1.100'),
+  firmware_version: z.string().optional(),
+  ip_address: z.string().optional(),
 });
 
 export const toggleRelaySchema = z.object({
@@ -16,18 +18,22 @@ export const toggleRelaySchema = z.object({
 });
 
 export async function getDevices(req: Request, res: Response) {
+  await markStaleDevicesOffline();
   const devices = await Device.find().lean();
   const relays = await Relay.find().lean();
   const rooms = await Room.find().lean();
+  const recentTelemetry = await getRecentTelemetry();
 
   const enriched = devices.map((dev) => {
     const room = rooms.find((r) => r.id === dev.room_id);
     const devRelays = relays.filter((r) => r.device_id === dev.id);
+    const telemetry = recentTelemetry.get(dev.id);
 
     return {
       ...dev,
       room_name: room ? room.name : 'Unassigned',
       relays: devRelays,
+      telemetry: telemetry || null,
     };
   });
 
@@ -42,15 +48,15 @@ export async function registerDevice(req: Request, res: Response) {
     return res.status(404).json({ success: false, message: 'Room not found' });
   }
 
-  const id = `dev_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+  const id = `dev_${randomUUID()}`;
   const device = await Device.create({
     id,
     room_id,
     name,
     device_token,
     mac_address,
-    firmware_version,
-    ip_address,
+    ...(firmware_version ? { firmware_version } : {}),
+    ...(ip_address ? { ip_address } : {}),
     status: 'OFFLINE',
     last_seen_at: null,
     created_at: new Date(),
@@ -77,8 +83,14 @@ export async function registerDevice(req: Request, res: Response) {
       auto_cutoff_enabled: true,
     },
   ]);
+  await AuditLog.create({
+    user_id: req.user?.id || null,
+    action: 'DEVICE_CONNECTED',
+    details: `ESP32 "${device.name}" was connected to room "${room.name}".`,
+    timestamp: new Date(),
+  });
 
-  return res.status(201).json({ success: true, data: device });
+  return res.status(201).json({ success: true, message: `ESP32 connected to ${room.name}.`, data: device });
 }
 
 export async function toggleRelay(req: Request, res: Response) {

@@ -20,7 +20,7 @@ export async function generateEnergyRecommendations() {
 
         if (!existing) {
           const potentialMonthlyKwh = rm.power_threshold_watts * 3 * 30; // 3 hours wastage per day over 30 days
-          const potentialMonthlyUsd = potentialMonthlyKwh * env.COST_PER_KWH;
+          const potentialMonthlyInr = potentialMonthlyKwh * env.COST_PER_KWH;
           const co2Kg = potentialMonthlyKwh * env.CO2_PER_KWH;
 
           await Recommendation.create({
@@ -31,7 +31,7 @@ export async function generateEnergyRecommendations() {
             category: rm.room_type === 'LABORATORY' ? 'HVAC_OPTIMIZATION' : 'LIGHTING_AUTOMATION',
             description: `High frequency of unoccupied wastage detected in ${rm.name} (${recentAlertsCount} incidents this week). Enabling automated relay schedules can eliminate idle load.`,
             potential_savings_kwh_monthly: Math.round(potentialMonthlyKwh),
-            potential_savings_usd_monthly: Math.round(potentialMonthlyUsd),
+            potential_savings_inr_monthly: Math.round(potentialMonthlyInr),
             co2_reduction_kg_monthly: Math.round(co2Kg),
             implementation_cost: 0,
             payback_months: 0,

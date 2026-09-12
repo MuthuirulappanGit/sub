@@ -14,11 +14,16 @@ export const ingestTelemetrySchema = z.object({
   occupancy: z.boolean(),
   temperature: z.number().optional().default(22.0),
   humidity: z.number().optional().default(45.0),
+  sensorStatus: z.object({
+    pir: z.boolean().optional(),
+    current: z.boolean().optional(),
+    electricity: z.boolean().optional(),
+  }).optional(),
   timestamp: z.string().refine((value) => !Number.isNaN(Date.parse(value)), 'Invalid telemetry timestamp').optional(),
 });
 
 export async function ingestTelemetry(req: Request, res: Response) {
-  const { deviceToken, voltage, current, power, energyKwh, powerFactor, occupancy, temperature, humidity, timestamp } = req.body;
+  const { deviceToken, voltage, current, power, energyKwh, powerFactor, occupancy, temperature, humidity, timestamp, sensorStatus } = req.body;
 
   const device = await Device.findOne({ device_token: deviceToken });
   if (!device) {
@@ -39,6 +44,7 @@ export async function ingestTelemetry(req: Request, res: Response) {
     temperature,
     humidity,
     timestamp: parsedTimestamp,
+    sensorStatus,
   });
 
   return res.json({

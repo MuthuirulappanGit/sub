@@ -12,6 +12,7 @@ export interface RecentTelemetry {
   energy_kwh: number;
   occupancy: boolean;
   timestamp: Date;
+  sensor_status?: { pir?: boolean; current?: boolean; electricity?: boolean };
 }
 
 export async function getRecentTelemetry(): Promise<Map<string, RecentTelemetry>> {
@@ -30,6 +31,13 @@ export async function getRecentTelemetry(): Promise<Map<string, RecentTelemetry>
         energy_kwh: log.energy_kwh,
         occupancy: log.occupancy,
         timestamp: log.timestamp,
+        sensor_status: log.sensor_status
+          ? {
+              pir: log.sensor_status.pir,
+              current: log.sensor_status.current,
+              electricity: log.sensor_status.electricity,
+            }
+          : undefined,
       });
     }
   }

@@ -7,6 +7,7 @@ const router = Router();
 
 // Ingest endpoint for ESP32 devices
 router.post('/telemetry/ingest', verifyEsp32Key, validateBody(ingestTelemetrySchema), ingestTelemetry);
+router.post('/telemetry', verifyEsp32Key, validateBody(ingestTelemetrySchema), ingestTelemetry);
 
 // Live & Historical endpoints for dashboard
 router.get('/telemetry/live', authenticate, getLiveTelemetry);

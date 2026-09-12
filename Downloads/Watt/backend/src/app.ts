@@ -12,7 +12,8 @@ import deviceRoutes from './routes/deviceRoutes.js';
 import telemetryRoutes from './routes/telemetryRoutes.js';
 import wastageRoutes from './routes/wastageRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
-import simulatorRoutes from './routes/simulatorRoutes.js';
+import settingsRoutes from './routes/settingsRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 import { errorHandler } from './middleware/errorHandler.js';
 
@@ -52,7 +53,8 @@ app.use('/api/v1', deviceRoutes);
 app.use('/api/v1', telemetryRoutes);
 app.use('/api/v1', wastageRoutes);
 app.use('/api/v1', analyticsRoutes);
-app.use('/api/v1', simulatorRoutes);
+app.use('/api/v1', settingsRoutes);
+app.use('/api/v1', notificationRoutes);
 
 // Serve Static Frontend Assets in Production Mode
 const frontendDistPath = path.resolve(process.cwd(), 'dist/frontend');

@@ -13,6 +13,7 @@ const envSchema = z.object({
   COST_PER_KWH: z.string().default('8').transform((val) => parseFloat(val)),
   CO2_PER_KWH: z.string().default('0.85').transform((val) => parseFloat(val)),
   TELEMETRY_TIMEOUT_SECONDS: z.string().default('30').transform((val) => parseInt(val, 10)),
+  WASTAGE_DURATION_SECONDS: z.string().default('300').transform((val) => parseInt(val, 10)),
 });
 
 export const env = envSchema.parse(process.env);

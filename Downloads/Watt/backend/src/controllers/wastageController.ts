@@ -12,10 +12,7 @@ export async function getWastageAlerts(req: Request, res: Response) {
   const alerts = await WastageAlert.find(filter).sort({ created_at: -1 }).lean();
   const rooms = await Room.find().lean();
   const devices = await Device.find().lean();
-  const recentDeviceIds = new Set((await getRecentTelemetry()).keys());
-  const visibleAlerts = alerts.filter((alert) => alert.status === 'RESOLVED' || recentDeviceIds.has(alert.device_id));
-
-  const enriched = visibleAlerts.map((a) => {
+  const enriched = alerts.map((a) => {
     const room = rooms.find((r) => r.id === a.room_id);
     const device = devices.find((d) => d.id === a.device_id);
 
@@ -37,7 +34,7 @@ export async function getWastageStats(req: Request, res: Response) {
   const validActiveAlerts = activeAlerts.filter((alert) => recentDeviceIds.has(alert.device_id));
   const validAlerts = allAlerts.filter((alert) => recentDeviceIds.has(alert.device_id));
 
-  const totalCostWastedUSD = validAlerts.reduce((sum, a) => sum + a.estimated_cost, 0);
+  const totalCostWasted = validAlerts.reduce((sum, a) => sum + a.estimated_cost, 0);
   const totalKwhWasted = validAlerts.reduce((sum, a) => sum + a.wasted_kwh, 0);
   const totalCo2KgWasted = validAlerts.reduce((sum, a) => sum + a.estimated_co2_kg, 0);
 
@@ -50,7 +47,7 @@ export async function getWastageStats(req: Request, res: Response) {
       active_alerts_count: validActiveAlerts.length,
       critical_alerts_count: criticalCount,
       high_alerts_count: highCount,
-      total_cost_wasted_usd: parseFloat(totalCostWastedUSD.toFixed(2)),
+      total_cost_wasted: parseFloat(totalCostWasted.toFixed(2)),
       total_kwh_wasted: parseFloat(totalKwhWasted.toFixed(2)),
       total_co2_kg_wasted: parseFloat(totalCo2KgWasted.toFixed(2)),
     },
